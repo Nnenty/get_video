@@ -33,6 +33,8 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 async fn usage() -> axum::response::Html<String> {
+    debug!("Client connected");
+
     let mut usage_html = tokio::fs::File::open("usage.html")
         .await
         .expect("usage.html is not found");
