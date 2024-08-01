@@ -21,7 +21,7 @@ The server should start listening for incoming connections on your port.
 cd get_video_rust/
 ```
 
-1. Specify the port you specified in the server
+1. Specify env port *you specified in the `server`*
 ```
 export PORT=8000
 ```
