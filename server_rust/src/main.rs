@@ -7,7 +7,7 @@ use axum::{
     Router,
 };
 use std::env;
-use tokio;
+use tokio::{self, io::AsyncReadExt};
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt as _, util::SubscriberInitExt as _, EnvFilter};
@@ -27,24 +27,34 @@ async fn main() {
     debug!("Listen on {addr}");
 
     let app = Router::new()
-        .route(
-            "/",
-            get(|| async {
-                debug!("Client connect");
-                StatusCode::OK
-            }),
-        )
-        .route("/video", get(handler_video));
+        .route("/", get(usage))
+        .route("/video", get(video));
 
     axum::serve(listener, app).await.unwrap();
 }
-async fn handler_video() -> impl IntoResponse {
-    debug!("Client connect");
+async fn usage() -> axum::response::Html<String> {
+    let mut usage_html = tokio::fs::File::open("usage.html")
+        .await
+        .expect("usage.html is not found");
+    let mut content = String::new();
+    usage_html.read_to_string(&mut content).await.unwrap();
+
+    // Html() parse it into:
+    //
+    // Response::builder()
+    //     .status(StatusCode::OK)
+    //     .header("Content-Type", "text/html")
+    //     .body(Body::from(content))
+    //     .unwrap()
+    axum::response::Html(content)
+}
+async fn video() -> impl IntoResponse {
+    debug!("Client connected");
 
     let filename = "shikonoko.mp4";
     let file = match tokio::fs::File::open(filename).await {
-        Ok(shikonoko) => shikonoko,
-        Err(e) => match e.kind() {
+        Ok(file) => file,
+        Err(err) => match err.kind() {
             tokio::io::ErrorKind::NotFound => {
                 return Err((StatusCode::NOT_FOUND, "Could not find file".to_owned()));
             }
@@ -71,6 +81,6 @@ async fn handler_video() -> impl IntoResponse {
         (header::CONTENT_LENGTH, filemeta.len().to_string()),
     ];
 
-    debug!("Client could got {} bytes", filemeta.len());
+    debug!("Client got {} bytes", filemeta.len());
     Ok((StatusCode::OK, headers, body))
 }
