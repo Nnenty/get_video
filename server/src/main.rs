@@ -27,17 +27,18 @@ async fn main() {
     debug!("Listen on {addr}");
 
     let app = Router::new()
-        .route("/", get(usage))
+        .route("/", get(show_usage))
         .route("/video", get(video));
 
     axum::serve(listener, app).await.unwrap();
 }
-async fn usage() -> axum::response::Html<String> {
+async fn show_usage() -> axum::response::Html<String> {
     debug!("Client connected");
 
-    let mut usage_html = tokio::fs::File::open("usage.html")
+    let mut usage_html = tokio::fs::File::open("templates/usage.html")
         .await
-        .expect("usage.html is not found");
+        .expect("`usage.html` is not found");
+
     let mut content = String::new();
     usage_html.read_to_string(&mut content).await.unwrap();
 
@@ -53,8 +54,8 @@ async fn usage() -> axum::response::Html<String> {
 async fn video() -> impl IntoResponse {
     debug!("Client connected");
 
-    let filename = "shikonoko.mp4";
-    let file = match tokio::fs::File::open(filename).await {
+    let file_path = "static/mp4/shikonoko.mp4";
+    let file = match tokio::fs::File::open(file_path).await {
         Ok(file) => file,
         Err(err) => match err.kind() {
             tokio::io::ErrorKind::NotFound => {
