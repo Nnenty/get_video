@@ -20,7 +20,7 @@ async fn main() {
         .init();
 
     let port = env::var("PORT").expect("specify `PORT` env");
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 

@@ -1,9 +1,22 @@
-use std::{env, io};
+use serde::Deserialize;
+use std::io;
+use toml;
 
 use reqwest;
 use tokio;
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt as _, util::SubscriberInitExt as _, EnvFilter};
+
+#[derive(Debug, Deserialize)]
+struct Server {
+    port: i32,
+    host: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct Config {
+    server: Server,
+}
 
 #[tokio::main]
 async fn main() {
@@ -26,9 +39,15 @@ async fn main() {
             },
         };
 
-        // only get video from server
-        let port = env::var("PORT").expect("specify `PORT` env");
-        let addr = format!("http://127.0.0.1:{}/video", port);
+        let toml = "config.toml";
+        let toml = std::fs::read_to_string(toml).unwrap();
+
+        let Config {
+            server: Server { port, host },
+        } = toml::from_str(&toml).unwrap();
+
+        // request video from server
+        let addr = format!("http://{host}:{port}/video");
 
         reqwest::blocking::get(addr)
             .unwrap()
