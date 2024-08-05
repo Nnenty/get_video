@@ -1,4 +1,7 @@
 services:
+  # Bad attempt to run client with docker;
+  # you can delete comment lines below:
+  #
   # client:
   #   container_name: client
   #   restart: "no"
@@ -15,7 +18,7 @@ services:
   #       max-size: "100m"
   #   depends_on:
   #     server:
-  #       condition: service_started          
+  #       condition: service_started   
   
   server:
     container_name: server

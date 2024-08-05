@@ -7,7 +7,9 @@ use axum::{
     Router,
 };
 use std::env;
-use tokio::{self, io::AsyncReadExt};
+use tokio;
+use tokio::io::AsyncReadExt;
+use tokio::signal;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt as _, util::SubscriberInitExt as _, EnvFilter};
@@ -30,7 +32,10 @@ async fn main() {
         .route("/", get(show_usage))
         .route("/video", get(video));
 
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
 }
 async fn show_usage() -> axum::response::Html<String> {
     debug!("Client connected");
@@ -86,4 +91,28 @@ async fn video() -> impl IntoResponse {
 
     debug!("Client got {} bytes", filemeta.len());
     Ok((StatusCode::OK, headers, body))
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }

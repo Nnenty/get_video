@@ -1,30 +1,28 @@
 <h1 align ="center">Usage</h1>
 
+- First clone our repository:
+```
+git clone https://github.com/Nnenty/get_video
+```
 ## Server
+1. Change the port in the `.env file` if necessary.
+2. Go to `server catalog`:
 ```
-cd server_rust/
+cd server/
 ```
-
-1. Specify env `PORT`
-```
-export PORT=8000
-```
-2. Run server
-```
-cargo run
+3. Run `docker compose`:
+``` 
+docker compose up --build
 ```
 
 The server should start listening for incoming connections on your port.
 
 ## Client
+1. Go to `client catalog`:
 ```
-cd get_video_rust/
+cd client/
 ```
 
-1. Specify env port *you specified in the `server`*
-```
-export PORT=8000
-```
 2. Run client
 ```
 cargo run
